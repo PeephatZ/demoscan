@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เว็บสะสม E-Stamp</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1rem; /* rounded-xl */
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); /* shadow-lg */
+            padding: 2rem;
+            max-width: 600px; /* Default max-width for frontend */
+            width: 100%;
+            text-align: center;
+            transition: max-width 0.3s ease, padding 0.3s ease; /* Smooth transition for container size */
+        }
+        .container.backend-view {
+            max-width: 1000px; /* Wider for backend tables */
+            text-align: left;
+            align-items: flex-start; /* Align to top for backend */
+            padding: 2.5rem; /* Increased padding for backend */
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem; /* rounded-lg */
+            font-weight: 600; /* font-semibold */
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background-color: #4f46e5; /* indigo-600 */
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca; /* indigo-700 */
+        }
+        .btn-secondary {
+            background-color: #6b7280; /* gray-500 */
+            color: #ffffff;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563; /* gray-600 */
+        }
+        .input-field {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db; /* gray-300 */
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+        }
+        .message.success {
+            background-color: #d1fae5; /* green-100 */
+            color: #065f46; /* green-800 */
+        }
+        .message.error {
+            background-color: #fee2e2; /* red-100 */
+            color: #991b1b; /* red-800 */
+        }
+        /* Stamp Grid Styling (Frontend) */
+        .stamp-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 columns */
+            gap: 10px; /* Gap between stamps */
+            margin-bottom: 1.5rem;
+            justify-items: center;
+        }
+        .stamp-slot {
+            width: 80px; /* Fixed size for each stamp slot */
+            height: 80px;
+            background-color: #e0e7ff; /* Light indigo background for empty slot */
+            border: 2px dashed #a5b4fc; /* Dashed border for empty slot */
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #6366f1;
+            font-weight: 500;
+            position: relative; /* For tooltip */
+        }
+        .stamp-slot.filled {
+            background-color: #818cf8; /* Indigo for filled slot */
+            border: 2px solid #4f46e5; /* Solid border for filled slot */
+            color: #ffffff;
+            font-weight: 700;
+            cursor: help; /* Indicates hover info */
+            background-image: url('https://placehold.co/80x80/6366f1/ffffff?text=%E2%9C%93'); /* Placeholder for a stamp image */
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem; /* Larger checkmark */
+        }
+        .stamp-slot.filled::after {
+            content: attr(data-activity-name); /* Display activity name from data attribute */
+            position: absolute;
+            bottom: -25px; /* Position below the stamp */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+            pointer-events: none; /* Allow clicks through tooltip */
+            font-size: 0.75rem;
+            z-index: 10;
+        }
+        .stamp-slot.filled:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+        .stamp-icon {
+            font-size: 2rem;
+            color: #ffffff;
+        }
+
+        /* Backend Specific Styles */
+        #backend-section h1, #backend-section h2, #backend-section h3 {
+            color: #1f2937; /* gray-800 */
+            margin-bottom: 1.5rem;
+        }
+        #backend-section h1 {
+            font-size: 2.5rem; /* text-4xl */
+            font-weight: 700; /* font-bold */
+            text-align: center;
+        }
+        #backend-section h2 {
+            font-size: 2rem; /* text-3xl */
+            font-weight: 600; /* font-semibold */
+            margin-top: 2.5rem; /* More space above sections */
+        }
+        #backend-section h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 600; /* font-semibold */
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        #backend-section table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+            background-color: #f9fafb; /* gray-50 */
+            border-radius: 0.5rem;
+            overflow: hidden; /* For rounded corners on table */
+        }
+        #backend-section th, #backend-section td {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb; /* gray-200 */
+            text-align: left;
+        }
+        #backend-section th {
+            background-color: #6366f1; /* indigo-500 */
+            color: #ffffff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem; /* text-sm */
+        }
+        #backend-section tr:last-child td {
+            border-bottom: none;
+        }
+        .summary-box {
+            background-color: #e0e7ff; /* indigo-100 */
+            border-left: 5px solid #4f46e5; /* indigo-600 */
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2.5rem;
+        }
+        .summary-box p {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-700 */
+            margin-bottom: 0.5rem;
+        }
+        .summary-box p:last-child {
+            margin-bottom: 0;
+        }
+        .summary-box strong {
+            color: #4f46e5; /* indigo-600 */
+        }
+        .team-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .team-card {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .team-card h4 {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #4f46e5;
+        }
+        .team-card p {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        /* QR Scanner Modal Styles */
+        .qr-scanner-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .qr-scanner-content {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+        }
+        .qr-camera-feed {
+            width: 100%;
+            height: 250px;
+            background-color: #333;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            background-image: url('https://placehold.co/400x250/000000/cccccc?text=Simulated+Camera+Feed'); /* Placeholder for camera view */
+            background-size: cover;
+            background-position: center;
+        }
+        .qr-scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, transparent, #4f46e5, transparent);
+            animation: scan-animation 2s infinite linear;
+        }
+        @keyframes scan-animation {
+            0% { top: 0; }
+            50% { top: calc(100% - 5px); }
+            100% { top: 0; }
+        }
+        .qr-scan-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 1rem;
+        }
+        .qr-scan-option-btn {
+            background-color: #6366f1;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .qr-scan-option-btn:hover {
+            background-color: #4f46e5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="main-container">
+        <!-- Login Section -->
+        <div id="login-section" class="space-y-4">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6">เว็บสะสม E-Stamp</h1>
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">เข้าสู่ระบบ</h2>
+            <input type="text" id="userIdInput" placeholder="กรอกรหัสประจำตัวผู้สมัคร" class="input-field mb-4">
+            <button id="loginBtn" class="btn btn-primary w-full">เข้าสู่ระบบ</button>
+            <div id="loginMessage" class="message hidden"></div>
+        </div>
+
+        <!-- Stamp Collection Section (Frontend) -->
+        <div id="stamp-section" class="hidden space-y-4 text-left">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold text-gray-700">บัญชี: <span id="loggedInUserId" class="text-indigo-600"></span></h2>
+                <button id="logoutBtn" class="btn btn-secondary text-sm">ออกจากระบบ</button>
+            </div>
+
+            <h3 class="text-xl font-medium text-gray-700 mb-3 text-center">สแตมป์ของคุณ:</h3>
+            <div id="stampGrid" class="stamp-grid">
+                <!-- Stamp slots will be dynamically inserted here -->
+            </div>
+            <div id="overflowStamps" class="text-gray-600 text-center mb-6">
+                <!-- Additional stamps beyond the grid will be listed here -->
+            </div>
+
+
+            <h3 class="text-xl font-medium text-gray-700 mb-3 text-center">สแกน QR Code เพื่อเก็บสแตมป์:</h3>
+            <div class="flex flex-col sm:flex-row gap-4 items-center">
+                <button id="openQrScannerBtn" class="btn btn-primary w-full sm:w-auto">สแกน QR</button>
+            </div>
+            <div id="scanMessage" class="message hidden mt-4"></div>
+        </div>
+
+        <!-- Backend Section -->
+        <div id="backend-section" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-3xl font-bold text-gray-800">ฐานข้อมูลหลังบ้าน E-Stamp</h1>
+                <button id="backendLogoutBtn" class="btn btn-secondary text-sm">ออกจากระบบ</button>
+            </div>
+            <button id="downloadCsvBtn" class="btn btn-primary mb-4">ดาวน์โหลดข้อมูลผู้สมัคร (CSV)</button>
+
+            <!-- Summary Section -->
+            <h2 class="text-center">ภาพรวมสแตมป์</h2>
+            <div id="summarySection" class="summary-box">
+                <!-- Summary data will be dynamically inserted here -->
+            </div>
+
+            <!-- Team Summary Section -->
+            <h2 class="text-center">คะแนนรวมแยกตามทีม</h2>
+            <div id="teamSummarySection" class="team-summary-grid">
+                <!-- Team summary cards will be dynamically inserted here -->
+            </div>
+
+            <!-- User Data Section -->
+            <h2>ข้อมูลผู้สมัคร</h2>
+            <table id="usersTable">
+                <thead>
+                    <tr>
+                        <th>รหัสผู้สมัคร</th>
+                        <th>ชื่อผู้สมัคร</th>
+                        <th>ทีม</th>
+                        <th>จำนวนสแตมป์ทั้งหมด</th>
+                        <!-- Dynamic activity columns will be added here -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- User data will be dynamically inserted here -->
+                </tbody>
+            </table>
+
+            <!-- Activities Data Section -->
+            <h2>ข้อมูลกิจกรรม</h2>
+            <table id="activitiesTable">
+                <thead>
+                    <tr>
+                        <th>รหัสกิจกรรม</th>
+                        <th>ชื่อกิจกรรม</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Activity data will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- QR Scanner Modal -->
+        <div id="qrScannerModal" class="qr-scanner-modal hidden">
+            <div class="qr-scanner-content">
+                <h3 class="text-2xl font-semibold text-gray-700 mb-4">จำลองการสแกน QR Code</h3>
+                <div class="qr-camera-feed">
+                    <div class="qr-scan-line"></div>
+                </div>
+                <p class="text-gray-600 mb-3">เลือกกิจกรรมเพื่อจำลองการสแกน:</p>
+                <div id="qrScanOptions" class="qr-scan-options">
+                    <!-- Activity buttons will be inserted here -->
+                </div>
+                <button id="closeScannerBtn" class="btn btn-secondary mt-6 w-full">ปิด</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // เชื่อมต่อ backend จริง
+        const BASE_URL = "http://localhost:4000/api";
+        let currentUserId = null;
+        let currentUserData = null;
+        let isAdmin = false;
+
+        // Get DOM elements (Global & Frontend)
+        const mainContainer = document.getElementById('main-container');
+        const loginSection = document.getElementById('login-section');
+        const stampSection = document.getElementById('stamp-section');
+        const userIdInput = document.getElementById('userIdInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginMessage = document.getElementById('loginMessage');
+        const loggedInUserIdSpan = document.getElementById('loggedInUserId');
+        const stampGrid = document.getElementById('stampGrid');
+        const overflowStamps = document.getElementById('overflowStamps');
+        const openQrScannerBtn = document.getElementById('openQrScannerBtn');
+        const scanMessage = document.getElementById('scanMessage');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Get DOM elements (Backend)
+        const backendSection = document.getElementById('backend-section');
+        const usersTable = document.getElementById('usersTable');
+        const usersTableHead = usersTable.querySelector('thead tr');
+        const usersTableBody = usersTable.querySelector('tbody');
+        const activitiesTableBody = document.querySelector('#activitiesTable tbody');
+        const summarySection = document.getElementById('summarySection');
+        const teamSummarySection = document.getElementById('teamSummarySection');
+        const backendLogoutBtn = document.getElementById('backendLogoutBtn');
+
+        // Get DOM elements (QR Scanner Modal)
+        const qrScannerModal = document.getElementById('qrScannerModal');
+        const qrScanOptions = document.getElementById('qrScanOptions');
+        const closeScannerBtn = document.getElementById('closeScannerBtn');
+
+        // Backend activities (fix)
+        const activitiesData = {
+            1: "ฐานที่ 1",
+            2: "ฐานที่ 2",
+            3: "ฐานที่ 3",
+            4: "ฐานที่ 4",
+            5: "ฐานที่ 5",
+            6: "ฐานที่ 6"
+        };
+        const MAX_GRID_STAMPS = 6;
+
+        // API functions
+        async function apiLogin(userId) {
+            const res = await fetch(`${BASE_URL}/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId })
+            });
+            if (!res.ok) throw new Error("รหัสประจำตัวไม่ถูกต้อง กรุณาลองอีกครั้ง");
+            return await res.json();
+        }
+        async function apiScan(userId, base) {
+            const res = await fetch(`${BASE_URL}/scan`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, base })
+            });
+            if (!res.ok) throw new Error((await res.json()).error || "เกิดข้อผิดพลาด");
+            return await res.json();
+        }
+        async function apiGetUser(userId) {
+            const res = await fetch(`${BASE_URL}/user/${userId}`);
+            if (!res.ok) throw new Error("ไม่พบข้อมูลผู้ใช้");
+            return await res.json();
+        }
+        async function apiGetUsers() {
+            const res = await fetch(`${BASE_URL}/users`);
+            if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลผู้ใช้ทั้งหมดได้");
+            return await res.json();
+        }
+
+        // Message helpers
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = `message ${type}`;
+            element.classList.remove('hidden');
+        }
+        function hideMessage(element) {
+            element.classList.add('hidden');
+        }
+
+        // Frontend Functions
+        function updateStampDisplay(user) {
+            if (!user) {
+                stampGrid.innerHTML = '';
+                overflowStamps.innerHTML = '<p class="text-gray-600">ไม่พบข้อมูลสแตมป์.</p>';
+                return;
+            }
+            stampGrid.innerHTML = '';
+            let collected = 0;
+            for (let i = 1; i <= MAX_GRID_STAMPS; i++) {
+                const stampSlot = document.createElement('div');
+                stampSlot.classList.add('stamp-slot');
+                if (user[`base${i}`] === 1) {
+                    stampSlot.classList.add('filled');
+                    stampSlot.title = activitiesData[i];
+                    stampSlot.dataset.activityName = activitiesData[i];
+                    stampSlot.innerHTML = '<span class="stamp-icon">&#10003;</span>';
+                    collected++;
+                } else {
+                    stampSlot.textContent = `ฐานที่ ${i}`;
+                }
+                stampGrid.appendChild(stampSlot);
+            }
+            overflowStamps.innerHTML = `<p class="text-gray-700 font-semibold mt-4">รวมสแตมป์: <span class="text-indigo-600">${user.total || 0}</span> ดวง | ทีม: <span class="text-indigo-600">${user.team || '-'}</span></p>`;
+        }
+
+        // QR Scanner Modal Functions
+        function openQrScanner() {
+            qrScannerModal.classList.remove('hidden');
+            qrScanOptions.innerHTML = '';
+            for (let i = 1; i <= MAX_GRID_STAMPS; i++) {
+                const button = document.createElement('button');
+                button.classList.add('qr-scan-option-btn');
+                button.textContent = activitiesData[i];
+                button.dataset.base = i;
+                button.onclick = async () => {
+                    try {
+                        const user = await apiScan(currentUserId, i);
+                        currentUserData = user;
+                        updateStampDisplay(user);
+                        showMessage(scanMessage, `รับสแตมป์ ${activitiesData[i]} สำเร็จ!`, 'success');
+                    } catch (e) {
+                        showMessage(scanMessage, e.message, 'error');
+                    }
+                    closeQrScanner();
+                };
+                qrScanOptions.appendChild(button);
+            }
+        }
+        function closeQrScanner() {
+            qrScannerModal.classList.add('hidden');
+            if (currentUserId) {
+                //
+            } else {
+                userIdInput.focus();
+            }
+        }
+
+        // Backend Functions
+        async function populateUsersTable() {
+            usersTableBody.innerHTML = '';
+            let currentHeaders = Array.from(usersTableHead.children).map(th => th.textContent);
+            let fixedHeaders = ["รหัสผู้สมัคร", "ชื่อผู้สมัคร", "ทีม", "จำนวนสแตมป์ทั้งหมด"];
+            while (usersTableHead.children.length > fixedHeaders.length) {
+                usersTableHead.removeChild(usersTableHead.lastChild);
+            }
+            for (let i = 1; i <= MAX_GRID_STAMPS; i++) {
+                const activityName = activitiesData[i];
+                if (!currentHeaders.includes(activityName)) {
+                    const th = document.createElement('th');
+                    th.textContent = activityName;
+                    usersTableHead.appendChild(th);
+                }
+            }
+            const users = await apiGetUsers();
+            for (const user of users) {
+                const row = usersTableBody.insertRow();
+                row.insertCell().textContent = user.userId;
+                row.insertCell().textContent = user.name;
+                row.insertCell().textContent = user.team;
+                row.insertCell().textContent = user.total;
+                for (let i = 1; i <= MAX_GRID_STAMPS; i++) {
+                    const cell = row.insertCell();
+                    if (user[`base${i}`] === 1) {
+                        cell.textContent = `1 ดวง`;
+                        cell.style.fontWeight = 'bold';
+                        cell.style.color = '#10b981';
+                    } else {
+                        cell.textContent = '-';
+                        cell.style.color = '#9ca3af';
+                    }
+                }
+            }
+        }
+        function populateActivitiesTable() {
+            activitiesTableBody.innerHTML = '';
+            for (let i = 1; i <= MAX_GRID_STAMPS; i++) {
+                const row = activitiesTableBody.insertRow();
+                row.insertCell().textContent = i;
+                row.insertCell().textContent = activitiesData[i];
+            }
+        }
+        async function generateSummary() {
+            const users = await apiGetUsers();
+            let totalUsers = users.length;
+            let totalStamps = users.reduce((sum, u) => sum + (u.total || 0), 0);
+            let activityCompletionCounts = {};
+            let teamScores = {};
+            for (let i = 1; i <= MAX_GRID_STAMPS; i++) activityCompletionCounts[i] = 0;
+            for (const user of users) {
+                if (!teamScores[user.team]) teamScores[user.team] = 0;
+                for (let i = 1; i <= MAX_GRID_STAMPS; i++) {
+                    if (user[`base${i}`] === 1) activityCompletionCounts[i]++;
+                }
+                teamScores[user.team] += user.total || 0;
+            }
+            let summaryHtml = `
+                <p>จำนวนผู้สมัครทั้งหมด: <strong>${totalUsers}</strong> คน</p>
+                <p>จำนวนสแตมป์ที่เก็บได้ทั้งหมด (รวมกัน): <strong>${totalStamps}</strong> ดวง</p>
+                <p class="mt-4 font-semibold">จำนวนผู้สมัครที่เก็บสแตมป์ได้แยกตามฐาน:</p>
+                <ul class="list-disc list-inside ml-4">
+            `;
+            for (let i = 1; i <= MAX_GRID_STAMPS; i++) {
+                summaryHtml += `<li>${activitiesData[i]}: <strong>${activityCompletionCounts[i]}</strong> คน</li>`;
+            }
+            summaryHtml += `</ul>`;
+            summarySection.innerHTML = summaryHtml;
+            teamSummarySection.innerHTML = '';
+            for (const teamName in teamScores) {
+                const teamCard = document.createElement('div');
+                teamCard.classList.add('team-card');
+                teamCard.innerHTML = `
+                    <h4>ทีม ${teamName}</h4>
+                    <p>${teamScores[teamName]} ดวง</p>
+                `;
+                teamSummarySection.appendChild(teamCard);
+            }
+        }
+
+        // CSV Download for backend
+        function convertUsersToCSV(users) {
+            const headers = [
+                'userId', 'name', 'team', 'base1', 'base2', 'base3', 'base4', 'base5', 'base6',
+                'time1', 'time2', 'time3', 'time4', 'time5', 'time6', 'total'
+            ];
+            const rows = [headers.join(",")];
+            for (const user of users) {
+                const row = headers.map(h => {
+                    let v = user[h];
+                    if (v instanceof Date) return v.toISOString();
+                    if (v === undefined || v === null) return '';
+                    return v;
+                });
+                rows.push(row.join(","));
+            }
+            return rows.join("\r\n");
+        }
+        async function downloadUsersCsv() {
+            try {
+                const users = await apiGetUsers();
+                const csv = convertUsersToCSV(users);
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'users.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                alert('เกิดข้อผิดพลาดในการดาวน์โหลด CSV: ' + e.message);
+            }
+        }
+
+        // Global View Management
+        function showLogin() {
+            mainContainer.classList.remove('backend-view');
+            loginSection.classList.remove('hidden');
+            stampSection.classList.add('hidden');
+            backendSection.classList.add('hidden');
+            userIdInput.value = '';
+            hideMessage(loginMessage);
+            hideMessage(scanMessage);
+            userIdInput.focus();
+            currentUserId = null;
+            currentUserData = null;
+            isAdmin = false;
+        }
+        function showStampCollection() {
+            mainContainer.classList.remove('backend-view');
+            loginSection.classList.add('hidden');
+            stampSection.classList.remove('hidden');
+            backendSection.classList.add('hidden');
+            updateStampDisplay(currentUserData);
+            hideMessage(loginMessage);
+            hideMessage(scanMessage);
+        }
+        async function showBackend() {
+            mainContainer.classList.add('backend-view');
+            loginSection.classList.add('hidden');
+            stampSection.classList.add('hidden');
+            backendSection.classList.remove('hidden');
+            await populateUsersTable();
+            populateActivitiesTable();
+            await generateSummary();
+        }
+
+        // Event Listeners
+        loginBtn.addEventListener('click', async () => {
+            const userId = userIdInput.value.trim();
+            if (userId.toUpperCase() === "ADMIN") {
+                isAdmin = true;
+                await showBackend();
+            } else {
+                try {
+                    const user = await apiLogin(userId);
+                    currentUserId = user.userId;
+                    currentUserData = user;
+                    loggedInUserIdSpan.textContent = user.name;
+                    showStampCollection();
+                } catch (e) {
+                    showMessage(loginMessage, e.message, 'error');
+                }
+            }
+        });
+        logoutBtn.addEventListener('click', showLogin);
+        backendLogoutBtn.addEventListener('click', showLogin);
+        openQrScannerBtn.addEventListener('click', openQrScanner);
+        closeScannerBtn.addEventListener('click', closeQrScanner);
+        document.getElementById('downloadCsvBtn').addEventListener('click', downloadUsersCsv);
+        document.addEventListener('DOMContentLoaded', showLogin);
+    </script>
+</body>
+</html>

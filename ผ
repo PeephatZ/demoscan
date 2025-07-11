@@ -1,0 +1,10 @@
+ดำเนินการสร้าง backend ให้แล้วบางส่วน (package.json, .env.example)
+แต่ระบบไม่อนุญาตให้สร้างไฟล์บางไฟล์โดยตรง (package.json) ใน workspace นี้
+แผนสำรอง:
+จะสร้างไฟล์ backend หลัก (server.js, models/User.js, import_users.js) ให้คุณนำไปวางในโฟลเดอร์ใหม่ (เช่น backend/)
+คุณสามารถ copy/paste เนื้อหา package.json และ .env.example ที่แนะนำไปสร้างเองได้
+ขั้นตอนถัดไป:
+สร้างไฟล์ models/User.js (Mongoose schema)
+สร้างไฟล์ import_users.js (import user.csv, assign team 1-10)
+สร้างไฟล์ server.js (Express API)
+จะเริ่มสร้างไฟล์เหล่านี้ให้ทันที!
